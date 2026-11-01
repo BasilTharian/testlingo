@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Demo Shop – Dashboard</title>
+<style>
+  body{font-family:system-ui,sans-serif;margin:0;background:#f4f5f7}
+  header{background:#2754d6;color:#fff;padding:16px 24px;display:flex;justify-content:space-between;align-items:center}
+  main{padding:24px;max-width:720px} .item{background:#fff;padding:14px;border-radius:8px;margin:8px 0;display:flex;justify-content:space-between}
+  a{color:#fff} button{padding:6px 12px;border-radius:6px;border:1px solid #2754d6;background:#fff;color:#2754d6;cursor:pointer}
+  #cart{font-weight:600}
+</style>
+</head>
+<body>
+<header><strong>Demo Shop</strong><span>Cart: <span id="cart">0</span> · <a href="login.html">Logout</a></span></header>
+<main>
+  <h2>Welcome, tester</h2>
+  <label>Category <select id="cat" name="category"><option>All</option><option>Shoes</option><option>Bags</option></select></label>
+  <div class="item product">Running Shoes – £49 <button onclick="add()">Add to cart</button></div>
+  <div class="item product">Leather Bag – £89 <button onclick="add()">Add to cart</button></div>
+  <div class="item product">Sun Hat – £15 <button onclick="add()">Add to cart</button></div>
+</main>
+<script>let n=0;function add(){document.getElementById('cart').textContent=++n}</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+# Render Blueprint: Render reads this file and creates the website for you.
+services:
+  - type: web
+    name: testpilot          # the Render service id; renaming it would create a new service, so it stays
+    runtime: docker
+    # "free" costs $0 but has 512 MB of memory, sleeps when idle and is slow to wake.
+    # For heavier sites change this to "standard" (1 CPU, 2 GB) and raise MAX_PARALLEL_RUNS to 2.
+    plan: free
+    healthCheckPath: /healthz
+    envVars:
+      - key: ACCESS_PASSWORD
+        generateValue: true   # Render makes a random password: find it under Environment
+      - key: BLOCK_PRIVATE_NETWORKS
+        value: "1"
+      - key: APP_NAME           # the name shown on the site; change it in Render > Environment
+        value: "Testlingo"
+      - key: MAX_PARALLEL_RUNS
+        value: "1"

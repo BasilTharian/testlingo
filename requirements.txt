@@ -1,0 +1,6 @@
+flask>=3.0
+requests>=2.31
+playwright>=1.45
+Appium-Python-Client>=4.0
+openpyxl>=3.1
+gunicorn>=22.0; sys_platform != "win32"

@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Testlingo – Plain-English Test Automation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f2ee; --panel:#ffffff; --ink:#1b1d22; --muted:#6b6f78; --line:#e2e0da;
+  --accent:#1f4fd8; --accent-soft:#e8eefc; --pass:#167a4a; --pass-soft:#e4f4ec;
+  --fail:#c0392b; --fail-soft:#fbe9e7; --skip:#8a8f98; --skip-soft:#f0f0f2;
+  --code-bg:#15171c; --code-ink:#d9dde5;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+header{border-bottom:1px solid var(--line);background:var(--panel)}
+.bar{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:12px}
+.logo{width:30px;height:30px;border-radius:8px;background:var(--ink);display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px}
+.brand{font-weight:700;font-size:18px;letter-spacing:-.01em}
+.tag{color:var(--muted);font-size:14px;margin-left:4px}
+main{max-width:1180px;margin:0 auto;padding:28px 24px 60px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:960px){main{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+.stepno{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font-size:12px;font-weight:600;align-items:center;justify-content:center;margin-right:8px}
+h2{font-size:15px;font-weight:600;margin:0 0 12px;display:flex;align-items:center}
+.section{margin-bottom:26px}
+.platforms{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.plat{border:1.5px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;background:var(--panel);text-align:left;font:inherit;color:inherit;transition:border-color .15s,background .15s}
+.plat:hover{border-color:#b9bfcc}
+.plat[aria-pressed=true]{border-color:var(--accent);background:var(--accent-soft)}
+.plat svg{width:22px;height:22px;stroke:var(--accent);fill:none;stroke-width:1.8}
+.plat b{display:block;margin-top:6px;font-size:15px}
+.plat small{color:var(--muted);font-size:12.5px}
+label.f{display:block;font-size:13px;font-weight:500;margin:12px 0 5px}
+input[type=text],input[type=url],select,textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font:inherit;background:#fcfcfb;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+textarea{font-family:var(--mono);font-size:13.5px;line-height:1.6;resize:vertical}
+#testcase{min-height:260px}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:130px}
+.hint{color:var(--muted);font-size:12.5px;margin-top:5px}
+.linkbtn{background:none;border:0;color:var(--accent);font:inherit;font-size:13px;cursor:pointer;padding:0}
+.linkbtn:hover{text-decoration:underline}
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.drop{border:1.5px dashed #c8c6bf;border-radius:10px;padding:16px;text-align:center;color:var(--muted);font-size:13.5px;cursor:pointer;background:#fcfcfb}
+.drop.has{border-style:solid;border-color:var(--accent);color:var(--ink);background:var(--accent-soft)}
+details.more{margin-top:12px;font-size:13.5px}
+details.more summary{cursor:pointer;color:var(--accent)}
+.run{width:100%;margin-top:6px;padding:13px;border:0;border-radius:10px;background:var(--ink);color:#fff;font:inherit;font-weight:600;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.run:hover{background:#000}.run:disabled{opacity:.6;cursor:wait}
+.spin{width:16px;height:16px;border:2px solid #fff6;border-top-color:#fff;border-radius:50%;animation:s 0.8s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+.check{display:flex;align-items:center;gap:8px;font-size:13.5px;margin-top:12px}
+
+/* guide */
+.guide{background:#fbfaf7;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-top:10px;font-size:13.5px}
+.guide h4{margin:10px 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.guide h4:first-child{margin-top:0}
+.guide code{font-family:var(--mono);font-size:12.5px;background:#fff;border:1px solid var(--line);border-radius:5px;padding:1px 5px;display:inline-block;margin:2px 0}
+.guide ul{margin:4px 0;padding-left:18px}
+
+/* results */
+.empty{color:var(--muted);text-align:center;padding:60px 20px}
+.empty svg{width:40px;height:40px;stroke:#c3c1ba;fill:none;stroke-width:1.5;margin-bottom:8px}
+.verdict{display:flex;align-items:center;gap:14px;padding:16px;border-radius:12px;margin-bottom:16px}
+.verdict.passed{background:var(--pass-soft)}.verdict.failed{background:var(--fail-soft)}
+.verdict .big{font-size:20px;font-weight:700}
+.verdict.passed .big{color:var(--pass)}.verdict.failed .big{color:var(--fail)}
+.stats{display:flex;gap:14px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.stats b{color:var(--ink)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.tab{background:none;border:0;padding:8px 12px;font:inherit;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab[aria-selected=true]{color:var(--ink);border-color:var(--ink);font-weight:500}
+.step{display:grid;grid-template-columns:24px 1fr auto;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);align-items:start}
+.step:last-child{border-bottom:0}
+.dot{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff}
+.dot.passed{background:var(--pass)}.dot.failed{background:var(--fail)}.dot.skipped{background:var(--skip)}
+.step .txt{font-weight:500;word-break:break-word}
+.step .msg{font-size:13px;color:var(--muted);word-break:break-word}
+.step.failed .msg{color:var(--fail)}
+.step .ms{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.step img{max-width:100%;border:1px solid var(--line);border-radius:8px;margin-top:8px;display:block}
+pre.code{background:var(--code-bg);color:var(--code-ink);border-radius:10px;padding:16px;font-family:var(--mono);font-size:12.5px;line-height:1.55;overflow:auto;max-height:560px;margin:0;white-space:pre}
+.actions{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:6px 11px;font:inherit;font-size:13px;cursor:pointer}
+.btn:hover{border-color:#b9bfcc}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--panel);padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--ink);color:#fff}
+.codenote{font-size:13px;color:var(--muted);margin:0 0 10px}
+.codenote code{font-family:var(--mono);font-size:12px}
+.req{border:1px solid var(--line);border-radius:10px;margin-bottom:12px;overflow:hidden}
+.req-head{display:flex;gap:10px;align-items:center;padding:10px 12px;background:#fbfaf7;cursor:pointer;font-size:13.5px}
+.meth{font-family:var(--mono);font-weight:600;font-size:12px;padding:2px 7px;border-radius:5px;background:var(--accent-soft);color:var(--accent)}
+.code-badge{font-family:var(--mono);font-weight:600;font-size:12px;padding:2px 7px;border-radius:5px}
+.code-badge.ok{background:var(--pass-soft);color:var(--pass)}.code-badge.bad{background:var(--fail-soft);color:var(--fail)}
+.req-url{flex:1;font-family:var(--mono);font-size:12.5px;word-break:break-all}
+.req-meta{color:var(--muted);font-size:12px;white-space:nowrap}
+.req-body{padding:12px;display:none}
+.req.open .req-body{display:block}
+.req-body h5{margin:10px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.req-body h5:first-child{margin-top:0}
+.req-body pre.code{max-height:360px}
+.error-box{background:var(--fail-soft);color:var(--fail);border-radius:10px;padding:12px 14px;font-size:14px}
+.final img{max-width:100%;border:1px solid var(--line);border-radius:10px}
+.tc-meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:6px}
+.tc-meta #caseCount{font-weight:600;color:var(--ink)}
+.tc-meta a{color:var(--accent)}
+.import-note{margin-top:8px;font-size:13px;background:var(--accent-soft);border-radius:8px;padding:8px 10px}
+.import-note.bad{background:var(--fail-soft);color:var(--fail)}
+.import-note.good{background:var(--pass-soft);color:var(--pass)}
+#testcase.dropping{outline:2px dashed var(--accent);outline-offset:2px}
+.toolbar{flex-wrap:wrap;gap:6px}
+.runrow{display:flex;gap:10px;align-items:stretch;margin-top:6px}
+.runrow .run{margin-top:0;flex:1}
+.par{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);white-space:nowrap}
+.par select{width:auto;padding:9px 10px}
+.progress{height:4px;background:var(--line);border-radius:4px;overflow:hidden;margin:-6px 0 14px}
+.progress > div{height:100%;background:var(--accent);width:0;transition:width .4s}
+.verdict.running{background:var(--skip-soft)}
+.verdict.running .big{color:var(--ink)}
+.cases{display:flex;flex-direction:column;gap:8px}
+.case{border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.case > summary{display:flex;align-items:center;gap:10px;padding:11px 12px;cursor:pointer;list-style:none}
+.case > summary::-webkit-details-marker{display:none}
+.case[open] > summary{border-bottom:1px solid var(--line)}
+.case-title{flex:1;font-weight:500;min-width:0;word-break:break-word}
+.case-meta{font-size:12px;color:var(--muted);font-family:var(--mono);white-space:nowrap}
+.case-body{padding:6px 14px 12px}
+.dot.queued{background:var(--line)}
+.dot.running{background:var(--accent);animation:pulse 1s ease-in-out infinite}
+.dot.cancelled{background:var(--skip)}
+@keyframes pulse{50%{opacity:.4}}
+@media (prefers-reduced-motion: reduce){.dot.running{animation:none}.progress > div{transition:none}}
+.subtabs{display:flex;gap:6px;margin:8px 0 6px;flex-wrap:wrap}
+.subtab{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 11px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--muted)}
+.subtab[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.muted{color:var(--muted);font-size:13.5px}
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <div class="logo" id="appLogo">T</div><span class="brand" id="appName">Testlingo</span><span class="tag" id="appTag">Write tests in plain English. Run them for real.</span>
+</div></header>
+
+<main>
+<!-- ================= LEFT: setup ================= -->
+<section class="panel">
+  <div class="section">
+    <h2><span class="stepno">1</span>What do you want to test?</h2>
+    <div class="platforms" role="group">
+      <button class="plat" data-p="web" aria-pressed="true">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></svg>
+        <b>Web</b><small>Website in a browser</small></button>
+      <button class="plat" data-p="mobile" aria-pressed="false">
+        <svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg>
+        <b>Mobile</b><small>Android / iOS app</small></button>
+      <button class="plat" data-p="api" aria-pressed="false">
+        <svg viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></svg>
+        <b>API</b><small>REST endpoints</small></button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2><span class="stepno">2</span><span id="targetTitle">Paste the website URL</span></h2>
+
+    <!-- web -->
+    <div data-for="web">
+      <input type="url" id="webUrl" placeholder="https://your-site.com/login">
+      <div class="hint">No site handy? <button class="linkbtn" data-demo="web">Use the built-in demo shop</button></div>
+      <label class="check" id="showBrowserRow"><input type="checkbox" id="showBrowser"> Show the browser while it runs</label>
+    </div>
+
+    <!-- mobile -->
+    <div data-for="mobile" hidden>
+      <div class="row">
+        <div><label class="f">Platform</label>
+          <select id="mPlatform"><option>Android</option><option>iOS</option></select></div>
+        <div><label class="f">Device name</label>
+          <input type="text" id="mDevice" placeholder="Google Pixel 7 / iPhone 15"></div>
+        <div><label class="f">OS version</label>
+          <input type="text" id="mOs" placeholder="13.0 / 17"></div>
+      </div>
+      <label class="f">App file</label>
+      <div class="drop" id="drop">Drop your <b>.apk</b> / <b>.ipa</b> / <b>.app.zip</b> here, or click to choose
+        <input type="file" id="appFile" accept=".apk,.aab,.ipa,.app,.zip" hidden></div>
+      <label class="f">…or paste the app path / download URL</label>
+      <input type="text" id="mAppPath" placeholder="C:\apps\myapp.apk  or  https://…/myapp.apk">
+      <details class="more"><summary>App already installed on the device</summary>
+        <div class="row">
+          <div><label class="f">Android package</label><input type="text" id="mPackage" placeholder="com.example.app"></div>
+          <div><label class="f">Android activity</label><input type="text" id="mActivity" placeholder=".MainActivity"></div>
+        </div>
+        <label class="f">iOS bundle id</label><input type="text" id="mBundle" placeholder="com.example.app">
+      </details>
+      <label class="f">Device service (Appium server)</label>
+      <div class="row" style="flex-wrap:nowrap">
+        <input type="text" id="mAppium" value="http://127.0.0.1:4723">
+        <button class="btn" id="checkAppium" type="button" style="flex:0 0 auto">Check connection</button>
+      </div>
+      <div class="import-note" id="appiumNote" hidden></div>
+      <div class="hint" id="mobileHint">Use your own Appium server with an emulator or phone, or a cloud device service:
+        <button class="linkbtn" id="useBs">fill in BrowserStack</button>, then replace USERNAME and ACCESS_KEY with yours.</div>
+    </div>
+
+    <!-- api -->
+    <div data-for="api" hidden>
+      <div class="row" style="flex-wrap:nowrap">
+        <select id="aMethod" style="flex:0 0 110px"><option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option></select>
+        <input type="text" id="aUrl" placeholder="https://api.example.com/v1   or paste a cURL command">
+      </div>
+      <div class="hint">Paste a base URL (steps can add paths like <code>"/users"</code>), a full endpoint, or a whole cURL command. <button class="linkbtn" data-demo="api">Use the built-in demo API</button></div>
+      <details class="more"><summary>Default headers / body</summary>
+        <label class="f">Headers (one per line, <code>Name: value</code>, or JSON)</label>
+        <textarea id="aHeaders" rows="3" placeholder="Authorization: Bearer abc123&#10;Accept: application/json"></textarea>
+        <label class="f">Body (JSON) for the first request</label>
+        <textarea id="aBody" rows="3" placeholder='{"name": "Ann"}'></textarea>
+      </details>
+    </div>
+  </div>
+
+  <div class="section" style="margin-bottom:12px">
+    <div class="toolbar">
+      <h2 style="margin:0"><span class="stepno">3</span>Write your test cases</h2>
+      <span class="links"><button class="linkbtn" id="loadExample">Insert example</button> · <button class="linkbtn" id="tplBtn">Excel template</button> · <button class="linkbtn" id="importBtn">Upload Excel</button> · <button class="linkbtn" id="toggleGuide">How to write</button></span>
+    </div>
+    <input type="file" id="importFile" accept=".xlsx,.xlsm,.xls,.csv,.tsv,.txt,.feature,.md" hidden>
+    <textarea id="testcase" spellcheck="false"></textarea>
+    <div class="tc-meta"><span id="caseCount">No test cases yet</span><span class="hint" style="margin:0">Start each test case with <code>Test: name</code> · <button class="linkbtn" id="exportBtn">Save these as Excel</button></span></div>
+    <div class="import-note" id="importNote" hidden></div>
+    <div class="guide" id="guide" hidden></div>
+  </div>
+
+  <div class="runrow">
+    <button class="run" id="run">Run tests</button>
+    <label class="par" for="parallel">At once
+      <select id="parallel"><option value="1">1</option></select></label>
+  </div>
+</section>
+
+<!-- ================= RIGHT: results ================= -->
+<section class="panel" id="results">
+  <div class="empty">
+    <svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>
+    <div><b>Results show up here</b></div>
+    <div style="font-size:13.5px">Each step gets a pass or fail, with the reason, screenshots and API responses,<br>plus a ready-to-run Java test (Selenium, Appium or RestAssured with TestNG).</div>
+  </div>
+</section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+let appName = "Testlingo";
+let platform = "web", appFile = null, run = null, pollTimer = null, maxParallel = 2;
+
+const EXAMPLES = {
+  web: `# Every test case starts on the URL above, in a fresh browser.
+
+Test: Login with a valid user
+1. Verify page title contains "Sign in"
+2. Type "tester" into "Username"
+3. Type "Pass@123" into "Password"
+4. Click "Login"
+5. Verify page contains "Welcome, tester"
+6. Verify URL contains "dashboard"
+
+Test: Login with a wrong password
+1. Type "tester" into "Username"
+2. Type "wrong" into "Password"
+3. Click "Login"
+4. Verify page contains "Invalid username or password"
+5. Verify page does not contain "Welcome"
+
+Test: Add an item to the cart
+1. Type "tester" into "Username"
+2. Type "Pass@123" into "Password"
+3. Click "Login"
+4. Select "Bags" from "Category"
+5. Click "Add to cart"
+6. Verify page contains "Cart: 1"
+7. Take a screenshot`,
+  mobile: `Test: Login with a valid user
+1. Wait for "Login"
+2. Type "tester" into "Username"
+3. Type "Pass@123" into "Password"
+4. Hide keyboard
+5. Tap "Login"
+6. Verify "Welcome" is displayed
+
+Test: Login with a wrong password
+1. Wait for "Login"
+2. Type "tester" into "Username"
+3. Type "wrong" into "Password"
+4. Hide keyboard
+5. Tap "Login"
+6. Verify "Invalid" is displayed
+
+Test: Open settings
+1. Type "tester" into "Username"
+2. Type "Pass@123" into "Password"
+3. Tap "Login"
+4. Swipe up
+5. Tap "Settings"
+6. Verify "Logout" is displayed
+7. Take a screenshot`,
+  api: `# Each test case starts fresh: no saved values or headers from other test cases.
+
+Test: List users
+1. Send GET request to "/users"
+2. Verify status code is 200
+3. Verify response field "data" is a list
+4. Verify response field "data.0.email" equals "asha@example.com"
+5. Verify response time is less than 2000 ms
+
+Test: Filter users by role
+1. Set query param "role" to "tester"
+2. Send GET request to "/users"
+3. Verify status code is 200
+4. Verify response field "data.0.name" equals "Ben Carter"
+
+Test: Log in and create a user
+1. Send POST request to "/login" with body {"username": "tester", "password": "Pass@123"}
+2. Verify status code is 200
+3. Save response field "token" as "token"
+4. Set header "Authorization" to "Bearer {{token}}"
+5. Send POST request to "/users" with body {"name": "Dee Smith", "email": "dee@example.com"}
+6. Verify status code is 201
+7. Save response field "data.id" as "newId"
+8. Send GET request to "/users/{{newId}}"
+9. Verify response field "data.name" equals "Dee Smith"
+
+Test: Creating a user without logging in is refused
+1. Send POST request to "/users" with body {"name": "Eve"}
+2. Verify status code is 401
+
+Test: Unknown user returns 404
+1. Send GET request to "/users/999"
+2. Verify status code is 404
+3. Verify response field "error" equals "User not found"`
+};
+
+const GUIDE = {
+  common: `<h4>Several test cases</h4><ul>
+    <li>Start each test case with a title line: <code>Test: Login works</code>. <code>Scenario: …</code>, <code>Test case 2: …</code> and <code>TC01: …</code> work too.</li>
+    <li>Every test case starts fresh (new browser, new app session, no saved API values) and runs even if another one fails.</li>
+    <li>Steps under <code>Background:</code> at the top run at the start of every test case. <code>Feature: …</code> names the whole suite.</li>
+    <li><b>Upload Excel</b>: one row per test case with columns like <i>Test Case ID, Title, Steps, Expected Result, Run</i> (steps on separate lines in the cell), or one row per step. Click <b>Excel template</b> for a file with examples, column notes and every phrase. CSV, .txt and .feature files work too, and you can drop a file onto the box.</li></ul>
+    <h4>Steps</h4><ul>
+    <li>One action per line. Numbers, bullets and <i>Given / When / Then</i> are all fine.</li>
+    <li>Put names and values in <b>"double quotes"</b>. Lines starting with <code>#</code> are comments.</li>
+    <li>A test case stops at its first failed step; the rest of its steps are marked skipped.</li></ul>`,
+  web: `<h4>Navigate</h4><code>Open "/login"</code> <code>Go back</code> <code>Refresh the page</code> <code>Scroll down</code>
+    <h4>Act</h4><code>Click "Login"</code> <code>Double click "Row 1"</code> <code>Type "tester" into "Username"</code> <code>Clear "Search"</code>
+    <code>Select "Bags" from "Category"</code> <code>Check "Remember me"</code> <code>Hover over "Menu"</code> <code>Press Enter</code>
+    <h4>Wait</h4><code>Wait 2 seconds</code> <code>Wait for "Loading complete"</code>
+    <h4>Verify</h4><code>Verify page contains "Welcome"</code> <code>Verify page does not contain "Error"</code>
+    <code>Verify title contains "Dashboard"</code> <code>Verify URL contains "/home"</code>
+    <code>Verify "Email" has value "a@b.com"</code> <code>Verify 3 elements ".product"</code> <code>Take a screenshot</code>
+    <h4>Finding things</h4>Fields are found by their label, placeholder, name or id; buttons and links by their visible text. You can also use a CSS selector like <code>Click "#submit"</code> or XPath <code>Click "//button[1]"</code>.`,
+  mobile: `<h4>Act</h4><code>Tap "Login"</code> <code>Long press "Photo"</code> <code>Type "tester" into "Username"</code> <code>Type "1234" into "field 2"</code>
+    <code>Clear "Search"</code> <code>Hide keyboard</code> <code>Press back</code>
+    <h4>Move</h4><code>Swipe up</code> <code>Swipe left</code> <code>Scroll to "Settings"</code> <code>Rotate to landscape</code> <code>Put app in background for 3 seconds</code>
+    <h4>Wait</h4><code>Wait 2 seconds</code> <code>Wait for "Home"</code>
+    <h4>Verify</h4><code>Verify "Welcome" is displayed</code> <code>Verify "Error" is not displayed</code> <code>Verify "Balance" has text "£20"</code> <code>Take a screenshot</code>
+    <h4>Finding things</h4>Elements are found by accessibility id, resource id, visible text, hint or content description. XPath works too: <code>Tap "//android.widget.Button[1]"</code>.`,
+  api: `<h4>Send</h4><code>Send GET request to "/users"</code> <code>Send DELETE request to "/users/3"</code>
+    <code>Send POST request to "/users" with body {"name": "Ann"}</code> <code>Send GET request</code> (uses the pasted URL)
+    <h4>Set up</h4><code>Set header "X-Api-Key" to "abc"</code> <code>Set bearer token "abc123"</code> <code>Set query param "page" to "2"</code> <code>Set body {"a": 1}</code>
+    <h4>Verify</h4><code>Verify status code is 200</code> <code>Verify response time is less than 1000 ms</code> <code>Verify response contains "Ann"</code>
+    <code>Verify response field "data.0.name" equals "Ann"</code> <code>Verify response field "data" has 5 items</code> <code>Verify response field "id" is a number</code>
+    <code>Verify response field "token" is not empty</code> <code>Verify response field "password" does not exist</code> <code>Verify header "Content-Type" contains "json"</code>
+    <h4>Chain requests</h4><code>Save response field "data.id" as "userId"</code> then use <code>{{userId}}</code> in later steps of the same test case.
+    <h4>If no step sends a request</h4>The pasted request (method, URL, headers, body) is sent first, then your checks run on its response.`
+};
+
+const TITLES = {web:"Paste the website URL", mobile:"Add the app to test", api:"Paste the API endpoint"};
+const LIBS = {web: "Selenium WebDriver + TestNG", mobile: "Appium java-client + TestNG", api: "RestAssured + TestNG"};
+const CASE_RE = /^(test(\s*case)?|scenario(\s+outline)?|title|tc)\s*[#_\-]?\s*(\d+)?\s*[:\-.)]\s*(.+)$/i;
+
+function setPlatform(p){
+  platform = p;
+  document.querySelectorAll(".plat").forEach(b => b.setAttribute("aria-pressed", b.dataset.p === p));
+  document.querySelectorAll("[data-for]").forEach(d => d.hidden = d.dataset.for !== p);
+  $("#targetTitle").textContent = TITLES[p];
+  const saved = store.get("tc_" + p);
+  $("#testcase").value = saved ?? "";
+  $("#testcase").placeholder = EXAMPLES[p] + "\n\n(Click “Insert example” to start from this.)";
+  $("#guide").innerHTML = GUIDE.common + GUIDE[p];
+  countCases();
+}
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+};
+function setTestcase(text){ $("#testcase").value = text; store.set("tc_" + platform, text); countCases(); }
+
+function countCases(){
+  const lines = $("#testcase").value.split("\n").map(l => l.trim());
+  const titled = lines.filter(l => CASE_RE.test(l)).length;
+  const hasSteps = lines.some(l => l && !l.startsWith("#") && !CASE_RE.test(l));
+  const n = titled || (hasSteps ? 1 : 0);
+  $("#caseCount").textContent = n === 0 ? "No test cases yet" : n === 1 ? "1 test case" : `${n} test cases`;
+  $("#run").textContent = n > 1 ? `Run ${n} tests` : "Run test";
+}
+
+document.querySelectorAll(".plat").forEach(b => b.onclick = () => setPlatform(b.dataset.p));
+$("#testcase").addEventListener("input", e => { store.set("tc_" + platform, e.target.value); countCases(); });
+$("#loadExample").onclick = () => setTestcase(EXAMPLES[platform]);
+$("#toggleGuide").onclick = () => { $("#guide").hidden = !$("#guide").hidden; };
+document.querySelectorAll("[data-demo]").forEach(b => b.onclick = () => {
+  if (b.dataset.demo === "web") $("#webUrl").value = location.origin + "/demo/login.html";
+  else { $("#aUrl").value = location.origin + "/demo/api"; $("#aMethod").value = "GET"; }
+  setTestcase(EXAMPLES[b.dataset.demo]);
+});
+
+// ---------------- import test cases (Excel, CSV, text) ----------------
+$("#importBtn").onclick = () => $("#importFile").click();
+/** Download a file from the server; show the reason in the note if it fails. */
+async function fetchDownload(url, fallbackName, options){
+  const note = $("#importNote");
+  try {
+    const r = await fetch(url, options);
+    if (!r.ok) {
+      let msg = `The download failed (error ${r.status}).`;
+      try { msg = (await r.json()).error || msg; } catch (e) { try { msg = (await r.text()) || msg; } catch (e2) {} }
+      throw new Error(msg);
+    }
+    const name = (r.headers.get("Content-Disposition") || "").match(/filename="([^"]+)"/);
+    downloadBlob(name ? name[1] : fallbackName, await r.blob());
+    return true;
+  } catch (err) {
+    note.hidden = false; note.className = "import-note bad"; note.textContent = err.message;
+    note.scrollIntoView({block: "nearest"});
+    return false;
+  }
+}
+function downloadTemplate(){ fetchDownload(`/api/template.xlsx?platform=${platform}`, `testlingo-${platform}-test-case-template.xlsx`); }
+$("#tplBtn").onclick = downloadTemplate;
+$("#exportBtn").onclick = async () => {
+  const note = $("#importNote");
+  if (!$("#testcase").value.trim()) { downloadTemplate(); return; }  // nothing written yet: give the template
+  fetchDownload("/api/export.xlsx", `testlingo-${platform}-test-cases.xlsx`,
+    {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({testcase: $("#testcase").value, platform})});
+};
+
+const drops = $("#testcase");
+drops.addEventListener("dragover", e => { if ([...e.dataTransfer.items].some(i => i.kind === "file")) { e.preventDefault(); drops.classList.add("dropping"); } });
+drops.addEventListener("dragleave", () => drops.classList.remove("dropping"));
+drops.addEventListener("drop", e => {
+  const f = e.dataTransfer.files[0]; drops.classList.remove("dropping");
+  if (f) { e.preventDefault(); importFile(f); }
+});
+$("#importFile").onchange = e => { const f = e.target.files[0]; e.target.value = ""; if (f) importFile(f); };
+
+async function importFile(f){
+  const note = $("#importNote");
+  const before = $("#testcase").value;
+  note.hidden = false; note.className = "import-note"; note.textContent = `Reading ${f.name}…`;
+  try {
+    let text, info = null;
+    if (/\.(xlsx|xlsm|xls|csv|tsv)$/i.test(f.name)) {
+      const fd = new FormData(); fd.append("file", f);
+      const r = await fetch("/api/import", {method: "POST", body: fd});
+      info = await r.json();
+      if (!r.ok) throw new Error(info.error || "The file could not be read.");
+      text = info.text;
+    } else {
+      text = (await f.text()).trim();
+      if (!text) throw new Error(`${f.name} is empty.`);
+    }
+    setTestcase(text);
+    const parts = [];
+    if (info) {
+      parts.push(`<b>${info.cases} test case${info.cases === 1 ? "" : "s"}</b> imported from ${esc(f.name)}` +
+                 (info.sheets_used.length > 1 ? ` (sheets: ${info.sheets_used.map(esc).join(", ")})` : ""));
+      if (info.skipped.length) parts.push(`${info.skipped.length} left out because Run is N`);
+      if (info.empty.length) parts.push(`${info.empty.length} had no steps: ${info.empty.slice(0, 3).map(esc).join(", ")}${info.empty.length > 3 ? "…" : ""}`);
+      if (info.comments) parts.push(`${info.comments} expected result${info.comments === 1 ? " isn't" : "s aren't"} written as a Verify step, so ${info.comments === 1 ? "it was" : "they were"} kept as a note (lines starting with #)`);
+    } else parts.push(`Imported ${esc(f.name)}`);
+    note.innerHTML = parts.join(" · ") + (before.trim() ? ` · <button class="linkbtn" id="undoImport">Undo</button>` : "");
+    const undo = $("#undoImport"); if (undo) undo.onclick = () => { setTestcase(before); note.hidden = true; };
+  } catch (err) {
+    note.className = "import-note bad"; note.textContent = err.message;
+  }
+}
+
+// ---------------- app file picker + drag/drop ----------------
+const drop = $("#drop");
+drop.onclick = () => $("#appFile").click();
+$("#appFile").onchange = e => pickFile(e.target.files[0]);
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("has"); };
+drop.ondragleave = () => { if (!appFile) drop.classList.remove("has"); };
+drop.ondrop = e => { e.preventDefault(); pickFile(e.dataTransfer.files[0]); };
+function pickFile(f){
+  if (!f) return; appFile = f; drop.classList.add("has");
+  drop.innerHTML = `<b>${esc(f.name)}</b> · ${(f.size/1048576).toFixed(1)} MB <span class="linkbtn">change</span>`;
+}
+
+// ---------------- start a run ----------------
+$("#run").onclick = () => startRun($("#testcase").value.trim());
+
+async function startRun(tc){
+  if (!tc) return showError("Write a test case first (or click “Insert example”).");
+  if (run && run.status === "running") return;
+  const btn = $("#run");
+  btn.disabled = true; btn.innerHTML = `<span class="spin"></span> Starting…`;
+  try {
+    const parallel = $("#parallel").value;
+    let res;
+    if (platform === "web") {
+      const url = $("#webUrl").value.trim();
+      if (!url) throw new Error("Paste the website URL first.");
+      res = await fetch("/api/run/web", {method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({url, testcase: tc, parallel, show_browser: $("#showBrowser").checked})});
+    } else if (platform === "api") {
+      const url = $("#aUrl").value.trim();
+      if (!url) throw new Error("Paste the API endpoint or a cURL command first.");
+      res = await fetch("/api/run/api", {method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({url, testcase: tc, parallel, method: $("#aMethod").value, headers: $("#aHeaders").value, body: $("#aBody").value})});
+    } else {
+      const fd = new FormData();
+      if (appFile) fd.append("app_file", appFile);
+      for (const [k, id] of [["app_path","#mAppPath"],["platform","#mPlatform"],["device_name","#mDevice"],["app_package","#mPackage"],
+                             ["app_activity","#mActivity"],["bundle_id","#mBundle"],["appium_url","#mAppium"],["os_version","#mOs"]])
+        fd.append(k, $(id).value.trim());
+      fd.append("testcase", tc); fd.append("parallel", parallel);
+      res = await fetch("/api/run/mobile", {method:"POST", body: fd});
+    }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Something went wrong");
+    run = {id: data.job_id, platform, suite: data.suite, status: "running", started: Date.now(),
+           cases: data.cases.map((t, i) => ({index: i, title: t, status: "queued", result: null})), java: null, texts: data.case_texts || []};
+    renderRun();
+    poll();
+  } catch (e) { showError(e.message); resetButton(); }
+}
+function resetButton(){ $("#run").disabled = false; countCases(); }
+
+async function poll(){
+  clearTimeout(pollTimer);
+  if (!run) return;
+  const have = run.cases.findIndex(c => !c.result);  // results we already hold stay out of the reply
+  try {
+    const r = await fetch(`/api/jobs/${run.id}?have=${have < 0 ? run.cases.length : have}`);
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error);
+    d.cases.forEach(c => {
+      const mine = run.cases[c.index];
+      mine.status = c.status;
+      if (c.result) mine.result = c.result;
+    });
+    run.status = d.status; run.java = d.java;
+    updateRun();
+    if (d.status === "running") pollTimer = setTimeout(poll, 1000);
+    else { resetButton(); if (!$("#results .case[open]")) openFirstInteresting(); }
+  } catch (e) {
+    pollTimer = setTimeout(poll, 3000);  // a hiccup: try again
+  }
+}
+
+// ---------------- results ----------------
+function showError(msg){ $("#results").innerHTML = `<div class="error-box">${esc(msg)}</div>`; }
+function esc(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+const ICON = {passed: "✓", failed: "✕", skipped: "–", cancelled: "–", queued: "", running: ""};
+
+function counts(){
+  const c = {passed: 0, failed: 0, cancelled: 0, queued: 0, running: 0};
+  run.cases.forEach(x => c[x.status] = (c[x.status] || 0) + 1);
+  return c;
+}
+
+function renderRun(){
+  $("#results").innerHTML = `
+    <div class="verdict" id="verdict"></div>
+    <div class="progress" id="progress"><div></div></div>
+    <div class="actions" id="runActions">
+      <button class="btn" id="stopBtn">Stop</button>
+      <button class="btn" id="dlExcel" hidden>Download Excel results</button>
+      <button class="btn" id="dlReport" hidden>Download report</button>
+      <button class="btn" id="dlJava" hidden>Download Java project</button>
+      <button class="btn" id="rerunFailed" hidden>Run failed tests again</button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-t="cases" aria-selected="true">Test cases (${run.cases.length})</button>
+      <button class="tab" role="tab" data-t="java" aria-selected="false">Java code</button>
+    </div>
+    <div id="casesView"><div class="cases" id="caseList">${run.cases.map(caseRow).join("")}</div></div>
+    <div id="javaView" hidden></div>`;
+  document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+    document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x === t));
+    $("#casesView").hidden = t.dataset.t !== "cases"; $("#javaView").hidden = t.dataset.t !== "java";
+    if (t.dataset.t === "java") renderJava();
+  });
+  $("#stopBtn").onclick = async () => {
+    $("#stopBtn").disabled = true; $("#stopBtn").textContent = "Stopping…";
+    try { await fetch(`/api/jobs/${run.id}/stop`, {method: "POST"}); } catch (e) {}
+  };
+  $("#dlReport").onclick = () => download(`${run.platform}-test-report.html`, reportHtml(), "text/html");
+  $("#dlExcel").onclick = async () => {
+    const ok = await fetchDownload(`/api/jobs/${run.id}/results.xlsx`, `testlingo-${run.platform}-results.xlsx`);
+    if (!ok) { const n = $("#importNote"); $("#results").insertAdjacentHTML("afterbegin", `<div class="error-box" style="margin-bottom:12px">${esc(n.textContent)}</div>`); }
+  };
+  $("#dlJava").onclick = () => {
+    const j = run.java || {}; if (!j.zip_b64) return;
+    const bytes = Uint8Array.from(atob(j.zip_b64), c => c.charCodeAt(0));
+    downloadBlob(j.zip_name || "testlingo-java.zip", new Blob([bytes], {type: "application/zip"}));
+  };
+  $("#rerunFailed").onclick = () => {
+    const failed = run.cases.filter(c => c.status === "failed").map(c => run.texts[c.index]).filter(Boolean);
+    if (failed.length) startRun((run.suite ? `Suite: ${run.suite}\n\n` : "") + failed.join("\n\n"));
+  };
+  bindCaseRows();
+  updateRun();
+}
+
+function caseRow(c){
+  return `<details class="case" data-i="${c.index}">
+      <summary><span class="dot ${c.status}" data-dot>${ICON[c.status] || ""}</span>
+        <span class="case-title">${esc(c.title)}</span><span class="case-meta" data-meta></span></summary>
+      <div class="case-body" data-body></div>
+    </details>`;
+}
+function bindCaseRows(){
+  document.querySelectorAll("#caseList .case").forEach(el => el.addEventListener("toggle", () => {
+    if (el.open) renderCaseBody(el, run.cases[+el.dataset.i]);
+  }));
+}
+
+function updateRun(){
+  const c = counts(), total = run.cases.length, finished = c.passed + c.failed + c.cancelled;
+  const running = run.status === "running";
+  const steps = run.cases.reduce((a, x) => a + (x.result ? x.result.summary.total : 0), 0);
+  const ms = run.cases.reduce((a, x) => a + (x.result ? x.result.summary.duration_ms : 0), 0);
+  const state = running ? "running" : c.failed ? "failed" : c.cancelled && !c.passed ? "cancelled" : c.cancelled ? "stopped" : "passed";
+  const heading = {running: total === 1 ? "Running…" : `Running… ${finished} of ${total} done`,
+                   failed: total === 1 ? "Failed" : `${c.failed} of ${total} failed`,
+                   passed: total === 1 ? "Passed" : `All ${total} passed`,
+                   stopped: "Stopped", cancelled: "Stopped"}[state];
+  const v = $("#verdict");
+  v.className = "verdict " + (state === "stopped" || state === "cancelled" ? "running" : state);
+  v.innerHTML = `<div><div class="big">${heading}</div>
+      <div style="font-size:13.5px">${esc(run.suite || (total === 1 ? run.cases[0].title : `${total} test cases`))}</div></div>
+    <div class="stats" style="margin-left:auto">
+      <span><b>${c.passed}</b> passed</span><span><b>${c.failed}</b> failed</span>
+      ${c.cancelled ? `<span><b>${c.cancelled}</b> not run</span>` : ""}
+      <span><b>${steps}</b> steps</span><span><b>${(ms/1000).toFixed(1)}s</b></span></div>`;
+  $("#progress").hidden = !running;
+  $("#progress > div").style.width = `${Math.round(100 * finished / total)}%`;
+  $("#stopBtn").hidden = !running;
+  $("#dlReport").hidden = running;
+  $("#dlExcel").hidden = running;
+  $("#dlJava").hidden = running || !(run.java && run.java.zip_b64);
+  $("#rerunFailed").hidden = running || !c.failed || total === 1;
+  run.cases.forEach(x => {
+    const el = $(`#caseList .case[data-i="${x.index}"]`); if (!el) return;
+    const dot = el.querySelector("[data-dot]");
+    dot.className = "dot " + x.status; dot.textContent = ICON[x.status] || "";
+    const s = x.result && x.result.summary;
+    el.querySelector("[data-meta]").textContent = s
+      ? `${s.passed}/${s.total} steps · ${(s.duration_ms/1000).toFixed(1)}s`
+      : {queued: "waiting", running: "running…", cancelled: "not run"}[x.status] || "";
+    if (el.open && x.result && !el.dataset.rendered) renderCaseBody(el, x);
+  });
+  if (!$("#javaView").hidden) renderJava();
+}
+
+function openFirstInteresting(){
+  const pick = run.cases.find(c => c.status === "failed") || (run.cases.length === 1 ? run.cases[0] : null);
+  if (pick) $(`#caseList .case[data-i="${pick.index}"]`).open = true;
+}
+
+function renderCaseBody(el, c){
+  const body = el.querySelector("[data-body]");
+  if (!c.result) { body.innerHTML = `<p class="muted">${c.status === "cancelled" ? "This test case was not run." : "Results appear here when this test case finishes."}</p>`; return; }
+  el.dataset.rendered = "1";
+  const d = c.result, tabs = [["steps","Steps"]];
+  if (d.requests && d.requests.length) tabs.push(["responses", `API responses (${d.requests.length})`]);
+  if (d.final_screenshot) tabs.push(["screen", "Final screen"]);
+  tabs.push(["code", "Python code"]);
+  body.innerHTML = `<div class="subtabs">${tabs.map(([k,l],i) => `<button class="subtab" data-t="${k}" aria-pressed="${i===0}">${l}</button>`).join("")}</div><div data-sub></div>`;
+  body.querySelectorAll(".subtab").forEach(b => b.onclick = () => {
+    body.querySelectorAll(".subtab").forEach(x => x.setAttribute("aria-pressed", x === b));
+    showSub(body.querySelector("[data-sub]"), b.dataset.t, d);
+  });
+  showSub(body.querySelector("[data-sub]"), "steps", d);
+}
+
+function showSub(box, t, d){
+  if (t === "steps") {
+    box.innerHTML = d.steps.map(st => `
+      <div class="step ${st.status}">
+        <div class="dot ${st.status}">${ICON[st.status]}</div>
+        <div><div class="txt">${esc(st.step)}</div><div class="msg">${esc(st.message)}</div>
+          ${st.screenshot ? `<img alt="Screenshot at this step" src="data:image/png;base64,${st.screenshot}">` : ""}</div>
+        <div class="ms">${st.ms} ms</div>
+      </div>`).join("");
+  } else if (t === "responses") {
+    box.innerHTML = d.requests.map((r,i) => `
+      <div class="req ${i===d.requests.length-1?"open":""}">
+        <div class="req-head"><span class="meth">${esc(r.method)}</span>
+          <span class="code-badge ${r.status<400?"ok":"bad"}">${r.status}</span>
+          <span class="req-url">${esc(r.url)}</span>
+          <span class="req-meta">${r.time_ms} ms · ${fmtSize(r.size)}</span></div>
+        <div class="req-body">
+          ${r.request_body ? `<h5>Request body</h5><pre class="code">${esc(pretty(r.request_body))}</pre>` : ""}
+          <h5>Response body</h5><pre class="code">${esc(r.response_body)}</pre>
+          <h5>Response headers</h5><pre class="code">${esc(Object.entries(r.response_headers).map(([k,v])=>k+": "+v).join("\n"))}</pre>
+          ${Object.keys(r.request_headers).length ? `<h5>Request headers</h5><pre class="code">${esc(Object.entries(r.request_headers).map(([k,v])=>k+": "+v).join("\n"))}</pre>` : ""}
+        </div></div>`).join("");
+    box.querySelectorAll(".req-head").forEach(h => h.onclick = () => h.parentElement.classList.toggle("open"));
+  } else if (t === "screen") {
+    box.innerHTML = `<div class="final"><img alt="Final screen" src="data:image/png;base64,${d.final_screenshot}"></div>`;
+  } else {
+    box.innerHTML = `<div class="actions"><button class="btn" data-copy>Copy</button></div><pre class="code">${esc(d.code || "# No code generated")}</pre>`;
+    box.querySelector("[data-copy]").onclick = e => copy(d.code || "", e.target);
+  }
+}
+
+function renderJava(){
+  const box = $("#javaView");
+  if (run.status === "running") { box.innerHTML = `<p class="muted">The Java test is ready when the run finishes.</p>`; box.dataset.done = ""; return; }
+  if (box.dataset.done === run.id) return;
+  box.dataset.done = run.id;
+  const j = run.java || {};
+  if (!j.code) { box.innerHTML = `<div class="error-box">${esc(j.error || "No Java was generated.")}</div>`; return; }
+  const others = (j.files || []).filter(f => !f.endsWith(j.class_name + ".java")).map(f => esc(f.split("/").pop())).join(", ");
+  box.innerHTML = `<p class="codenote"><b>${esc(j.class_name)}.java</b> · ${LIBS[run.platform]} · one <code>@Test</code> per test case (${run.cases.length}).
+      The downloaded Maven project also has ${others}. Run it with <code>mvn test</code>.</p>
+    <div class="actions"><button class="btn" data-copy>Copy</button></div>
+    <pre class="code">${esc(j.code)}</pre>`;
+  box.querySelector("[data-copy]").onclick = e => copy(j.code, e.target);
+}
+
+function copy(text, btn){
+  navigator.clipboard.writeText(text).then(() => { btn.textContent = "Copied"; }).catch(() => { btn.textContent = "Select the code and copy it"; });
+}
+function pretty(s){ try { return JSON.stringify(JSON.parse(s), null, 2); } catch(e){ return s; } }
+function fmtSize(n){ return n < 1024 ? n + " B" : (n/1024).toFixed(1) + " KB"; }
+function download(name, text, type){ downloadBlob(name, new Blob([text], {type})); }
+function downloadBlob(name, blob){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function reportHtml(){
+  const color = {passed:"#167a4a", failed:"#c0392b", skipped:"#8a8f98", cancelled:"#8a8f98"};
+  const c = counts();
+  const summaryRows = run.cases.map(x => {
+    const s = x.result && x.result.summary;
+    return `<tr><td>${x.index + 1}</td><td><a href="#case-${x.index}">${esc(x.title)}</a></td>
+      <td style="color:${color[x.status]};font-weight:600">${x.status === "cancelled" ? "not run" : x.status}</td>
+      <td>${s ? `${s.passed}/${s.total}` : "–"}</td><td>${s ? (s.duration_ms/1000).toFixed(1) + "s" : "–"}</td></tr>`;
+  }).join("");
+  const sections = run.cases.filter(x => x.result).map(x => {
+    const d = x.result;
+    const rows = d.steps.map(st => `<tr><td>${st.index}</td><td>${esc(st.step)}</td>
+      <td style="color:${color[st.status]};font-weight:600">${st.status}</td><td>${esc(st.message)}</td><td>${st.ms} ms</td></tr>
+      ${st.screenshot ? `<tr><td></td><td colspan="4"><img style="max-width:640px" src="data:image/png;base64,${st.screenshot}"></td></tr>` : ""}`).join("");
+    const reqs = (d.requests||[]).map(r => `<h4>${esc(r.method)} ${esc(r.url)} → ${r.status} (${r.time_ms} ms)</h4><pre>${esc(r.response_body)}</pre>`).join("");
+    return `<h2 id="case-${x.index}">${x.index + 1}. ${esc(x.title)} <span style="color:${color[x.status]}">${x.status}</span></h2>
+      <table><tr><th>#</th><th>Step</th><th>Status</th><th>Detail</th><th>Time</th></tr>${rows}</table>${reqs ? "<h3>API responses</h3>" + reqs : ""}`;
+  }).join("");
+  const j = run.java || {};
+  return `<!doctype html><meta charset="utf-8"><title>Test report – ${esc(run.suite || run.platform)}</title>
+  <style>body{font-family:system-ui,sans-serif;margin:32px;color:#1b1d22;max-width:1100px}table{border-collapse:collapse;width:100%;margin-bottom:12px}
+  td,th{border-bottom:1px solid #ddd;padding:8px;text-align:left;vertical-align:top;font-size:14px}pre{background:#f5f5f5;padding:12px;overflow:auto;font-size:12px}
+  h2{margin-top:36px;font-size:18px}</style>
+  <h1>${esc(run.suite || "Test run")}</h1>
+  <p style="color:#6b6f78;margin-top:-8px">Made with ${esc(appName)}</p>
+  <p><b style="color:${c.failed ? color.failed : color.passed}">${c.failed ? "FAILED" : "PASSED"}</b> ·
+  ${c.passed} of ${run.cases.length} test cases passed${c.cancelled ? `, ${c.cancelled} not run` : ""} · ${esc(run.platform)} · ${new Date().toLocaleString()}</p>
+  <table><tr><th>#</th><th>Test case</th><th>Result</th><th>Steps passed</th><th>Time</th></tr>${summaryRows}</table>
+  ${sections}
+  ${j.code ? `<h2>Java test (${esc(j.class_name)})</h2><pre>${esc(j.code)}</pre>` : ""}`;
+}
+
+$("#checkAppium").onclick = async () => {
+  const note = $("#appiumNote"), btn = $("#checkAppium");
+  btn.disabled = true; btn.textContent = "Checking…"; note.hidden = false; note.className = "import-note"; note.textContent = "Checking…";
+  try {
+    const r = await fetch("/api/appium/check", {method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({url: $("#mAppium").value})});
+    const d = await r.json();
+    note.className = "import-note" + (d.ok ? " good" : " bad"); note.textContent = (d.ok ? "✓ " : "") + d.message;
+  } catch (e) { note.className = "import-note bad"; note.textContent = "Testlingo itself didn't answer. Is it still running?"; }
+  finally { btn.disabled = false; btn.textContent = "Check connection"; }
+};
+$("#useBs").onclick = () => {
+  $("#mAppium").value = "https://USERNAME:ACCESS_KEY@hub-cloud.browserstack.com/wd/hub";
+  if (!$("#mDevice").value) $("#mDevice").value = $("#mPlatform").value === "iOS" ? "iPhone 15" : "Google Pixel 7";
+  if (!$("#mOs").value) $("#mOs").value = $("#mPlatform").value === "iOS" ? "17" : "13.0";
+};
+
+function setParallelOptions(max){
+  maxParallel = Math.max(1, max || 1);
+  const saved = +(store.get("parallel") || 1);
+  $("#parallel").innerHTML = Array.from({length: maxParallel}, (_, i) => `<option value="${i+1}">${i+1}</option>`).join("");
+  $("#parallel").value = String(Math.min(saved, maxParallel));
+}
+$("#parallel").onchange = e => store.set("parallel", e.target.value);
+
+// Online deployments run browsers on the server, so "show the browser" and local Appium don't apply.
+fetch("/api/config").then(r => r.json()).then(c => {
+  setParallelOptions(c.max_parallel);
+  if (c.app_name) {  // the APP_NAME setting renames the app without touching the code
+    $("#appName").textContent = c.app_name;
+    const words = c.app_name.trim().split(/\s+/), caps = c.app_name.match(/[A-Z]/g) || [];
+    $("#appLogo").textContent = words.length > 1 ? words.slice(0, 2).map(w => w[0]).join("").toUpperCase()
+      : caps.length >= 2 ? caps.slice(0, 2).join("") : c.app_name[0].toUpperCase();
+    document.title = `${c.app_name} – Plain-English Test Automation`;
+    appName = c.app_name;
+  }
+  if (c.tagline !== undefined) { $("#appTag").textContent = c.tagline; $("#appTag").hidden = !c.tagline; }
+  if (!c.online) return;
+  $("#showBrowserRow").hidden = true;
+  $("#mAppium").value = "https://USERNAME:ACCESS_KEY@hub-cloud.browserstack.com/wd/hub";
+  $("#mAppPath").placeholder = "https://…/myapp.apk  or  bs://app-id";
+  $("#mobileHint").innerHTML = "This online version runs mobile tests on real devices through a cloud service such as BrowserStack. Replace USERNAME and ACCESS_KEY with your own from your BrowserStack account settings.";
+}).catch(() => setParallelOptions(1));
+
+setPlatform("web");
+</script>
+</body>
+</html>
